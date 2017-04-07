@@ -1,0 +1,31 @@
+{
+    "scripts": {
+        "prestart": "npm run build",
+        "start": "node app.js",
+        "prebuild": "mkdir -p ./dist",
+        "build": "npm run build:webpack; npm run build:images; npm run build:views; npm run build:sass;",
+        "build:webpack": "webpack",
+        "build:images": "cp -r assets/images/ dist/images",
+        "build:views": "cp -r assets/views/** dist/",
+        "build:sass": "node-sass -q assets/sass/ -o dist/css/"
+    },
+    "dependencies": {
+        "babel-core": "^6.24.0",
+        "babel-loader": "^6.4.1",
+        "babel-plugin-transform-es2015-modules-commonjs": "^6.24.0",
+        "babel-plugin-transform-html-import-to-string": "^0.0.1",
+        "css-loader": "^0.27.3",
+        "express": "^4.15.2",
+        "node-sass": "^4.5.0",
+        "request": "^2.81.0",
+        "sass-loader": "^6.0.3",
+        "webpack": "1.14.0"
+    },
+    "name": "WebComponent",
+    "version": "1.0.0",
+    "description": "Demo of Web Component Front-End developer",
+    "main": "app.js",
+    "devDependencies": {},
+    "author": "Ratha Mom",
+    "license": "ISC"    
+}
