@@ -6,7 +6,7 @@ import css from 'css-loader!sass-loader!./autocomplete.scss';
 const CSS = css.toString();
 
 import HTML from 'autocomplete.html';
-
+import Actions from './actions.js';
 /**
  * @class
  * @memberof  Matrix
@@ -30,7 +30,8 @@ class MAutocomplete extends HTMLElement {
         const style = document.createElement('style');
         style.innerHTML = CSS;
         this.shadowRoot.prepend(style);
-        this._getJson(this._setJSONToData.bind(this));
+        this.actions = new Actions();
+        this.actions.asyncFun('/api/v1/people', this._setJSONToData.bind(this));
         this.input = this.shadowRoot.querySelector('#auto_complete_list');
         this.dropdownBtn = this.shadowRoot.querySelector('#dropdown_btn');
         this.selectList = this.shadowRoot.querySelector('#result_container');
@@ -48,7 +49,7 @@ class MAutocomplete extends HTMLElement {
     setSelectName(e) {
         const enterKey = 13;
         if (e.which == enterKey) {
-            this.input.value = this._lowerToUpperCase(this.selectList.value);
+            this.input.value = this.actions._lowerToUpperCase(this.selectList.value);
             this._setDefaultStyle();
             this.input.focus();
         }
@@ -58,7 +59,7 @@ class MAutocomplete extends HTMLElement {
      * This function is call when list is selected
      */
     setSelectedNameToInput() {
-        this.input.value = this._lowerToUpperCase(this.selectList.value);
+        this.input.value = this.actions._lowerToUpperCase(this.selectList.value);
         this._setDefaultStyle();
     }
 
@@ -81,99 +82,47 @@ class MAutocomplete extends HTMLElement {
      * Display all the user in the list
      */
     getAllListData() {
-        const thisApp = this;
-        if (thisApp.selectList.className == 'hide') {
-            const data = this.autoCompleteData;
-            const search = 'off';
-            thisApp._appendDataByOption({search, data, thisApp});
-            thisApp.input.style.border = 'solid 2px #6699cc';
-            thisApp.selectList.focus();
+        const _this = this;
+        if (_this.selectList.className == 'hide') {
+            const data = _this.autoCompleteData;
+            const searchOption = 'off';
+            const select = this.selectList;
+            const displayObj = this.actions.getDisplayData({searchOption, data});
+            select.className = displayObj.className;
+            select.innerHTML = displayObj.html;
+            _this.input.style.border = 'solid 2px #6699cc';
+            select.focus();
         } else {
-            thisApp._setDefaultStyle();
+            _this._setDefaultStyle();
         }
-    }
-
-    /**
-     * Return Capitalize string
-     * @param {string} str - string
-     * @returns {string} - return string
-     */
-    _lowerToUpperCase(str) {
-        return str.charAt(0).toUpperCase() + str.slice(1);
     }
 
     /* Search by character */
     getListDataByStr(e) {
-        const search = 'on';
+        const searchOption = 'on';
         const keyDown = 40;
-        const thisApp = this;
+        const _this = this;
         const data = this.autoCompleteData;
-        thisApp._appendDataByOption({search, data, thisApp});
+        _this._appendDataByOption({searchOption, data, _this});
         if (e.which === keyDown) {
-            thisApp.selectList.focus();
-            thisApp.input.style.border = 'solid 2px #6699cc';
+            _this.selectList.focus();
+            _this.input.style.border = 'solid 2px #6699cc';
         }
     }
 
-    _appendDataByOption({search, data, thisApp}) {
+    _appendDataByOption({searchOption, data, _this}) {
         if (data !== null) {
-            const input = thisApp.input;
+            const input = _this.input;
             const keyword = input.value;
             const select = this.selectList;
-            const options = [];
-            data.forEach((row) => {
-                const name = row.name;
-                const last = name.last;
-                const first = name.first;
-                const profile = row.profile;
-                switch (search) {
-                    case 'on':
-                        const firstSearch = first.search(keyword.toLowerCase());
-                        const lastSearch = last.search(keyword.toLowerCase());
-                        if (firstSearch > -1 || lastSearch > -1) {
-                            options.push(`<option style='background-image:url(${profile})' />${first} ${last}</option>`);
-                        }
-
-                        break;
-                    case 'off': options.push(`<option style='background-image:url(${profile})'>${first} ${last}</option>`);
-                        break;
-                }
-            });
-            if (options.length > 0) {
-                select.className = 'show ul_tag';
-                select.innerHTML = options.join('');
-            } else {
-                select.className = 'hide';
-            }
+            const displayObj = this.actions.getDisplayData({searchOption, data, keyword});
+            select.className = displayObj.className;
+            select.innerHTML = displayObj.html;
         }
     }
 
     _setJSONToData(data) {
         this.autoCompleteData = data;
-    }
-
-    _getJson(callbackFunction) {
-        const thisApp = this;
-        fetch('/api/v1/people')
-        .then(
-            response => {
-                if (response.status !== 200) {
-                    console.log(`Looks like there was a problem. Status Code: ${response.status}`);
-
-                    return;
-                }
-
-                // Examine the text in the response  
-                response.json().then(data => {
-                    callbackFunction(data, thisApp);
-                });
-            }
-        )
-        .catch(err => {
-            console.log('Fetch Error :-S', err);
-        });
-
-
     }
 
 }
